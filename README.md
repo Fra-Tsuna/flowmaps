@@ -8,7 +8,7 @@
   <a href="https://scholar.google.com/citations?user=xZwripcAAAAJ&hl=it&oi=ao">Daniele Nardi</a><sup>1</sup> ·
   <a href="https://liampaull.ca/">Liam Paull</a><sup>2,3</sup><br/>
   <sup>1</sup>Department of Computer, Control and Management Engineering, Sapienza University of Rome, Italy<br/>
-  <sup>2</sup>DIRO, Université de Montréal, Montréal, QC, Canada · <sup>3</sup>Mila — Quebec AI Institute, Montréal, QC, Canada<br/>
+  <sup>2</sup>DIRO, Université de Montréal, Montréal, QC, Canada · <sup>3</sup>Mila - Quebec AI Institute, Montréal, QC, Canada<br/>
   <sup>#</sup>Co‑first authors
   <br/><br/>
 
