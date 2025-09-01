@@ -1,0 +1,27 @@
+defaults:
+  - _self_                           
+  - path: cond_ot             # Probability path
+  - model: cdit                # Model
+  - optimizer: adamw          # Optimizer
+  - lr_scheduler: cosine         # LR scheduler
+  # Dataloaders
+  - dataloader@train_dataloader: train
+  - dataloader@val_dataloader: val
+  - trainer: default # Model trainer
+  - wandb: default
+
+  # experiment configs allow for version control of specific configurations
+  # e.g. best hyperparameters for each combination of model and datamodule
+  - experiment: null
+
+  # enable color logging
+  - override hydra/launcher: local
+  - override hydra/hydra_logging: colorlog      # Pretty colors
+  - override hydra/job_logging: colorlog
+
+# basic
+verbose: false
+original_work_dir: ${hydra:runtime.cwd}
+res_path: ${original_work_dir}/data
+seed: 2025
+name: "cond_ot_linear_euler"

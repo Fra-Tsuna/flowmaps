@@ -1,0 +1,35 @@
+# @package hydra.launcher
+_target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+partition: long
+cpus_per_task: 8
+mem_gb: 32
+tasks_per_node: 1
+gres: gpu:1 # gpu:1
+submitit_folder: ${hydra.sweep.dir}/submitit/%j
+timeout_min: 1440 # 3h : 179
+nodes: 1
+name: ${hydra.job.name}
+array_parallelism: 20 # max num of tasks to run in parallel (via job array)
+additional_parameters:
+  time: 0-12:00:00                               # maximum wall time allocated for the job (D-H:MM:SS)
+  mail-type: ARRAY_TASKS,FAIL,TIME_LIMIT         # events to notify user by email
+  mail-user: w9m7z6x4a1q1t5d1@robotics-montreal.slack.com                                 # email of the user
+  # accout: rrg-lpaull
+setup:
+  - "module load python/3.9"
+  - "module load cuda/12.5.0/cudnn/8.9"
+  - "export WANDB_DIR=${hydra.sweep.dir}"
+  - "export BREAK=False"
+  - "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDNN_LIB_DIR"
+  - "export CPATH=$CPATH:$CUDNN_INCLUDE_DIR"
+  - 'export DISKCACHE_DIR=${oc.env:SCRATCH}/diskcache'
+  - "CLUSTER_PATH=$SCRATCH"
+  - "export PYTHONPATH=$CLUSTER_PATH/flow-sim/:$PYTHONPATH"
+  - "export PYTHONPATH=$CLUSTER_PATH/flow-sim/src/:$PYTHONPATH"
+  - "export CUBLAS_WORKSPACE_CONFIG=:4096:8"
+  - "export HYDRA_FULL_ERROR=1"
+  - "source $HOME/.virtualenvs/flow-sim/bin/activate"
+  - "cd $CLUSTER_PATH/flow-sim"
+
+# Change data dir
+# data_dir: ${oc.env:SLURM_TMPDIR}/data

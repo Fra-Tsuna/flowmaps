@@ -1,0 +1,8 @@
+_target_: src.flowmaps.flowmaps.FlowMapsPipeline
+guidance_scale: 1.0
+null_label: null
+solver_args:
+  step_size: 0.05
+  steps: 10
+  return_intermediates: false
+  method: midpoint #midpoint, euler

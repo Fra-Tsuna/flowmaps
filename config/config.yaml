@@ -1,0 +1,17 @@
+# basic
+original_work_dir: ${hydra:runtime.cwd}
+res_path: ${original_work_dir}/data
+icons_dir: ${original_work_dir}/assets/icons
+seed: 123456
+
+n_env_train: 2500 # Set to 0 to disable training data generation
+n_env_val: 200 # Set to 0 to disable validation data generation
+
+max_timesteps: 15
+
+size: 256
+max_tables: 10
+min_each: 3
+stochastic: true
+
+display_scale: 1

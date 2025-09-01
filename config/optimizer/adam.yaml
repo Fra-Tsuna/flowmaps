@@ -1,0 +1,4 @@
+_target_: torch.optim.Adam
+lr: 1.0e-4
+betas: [0.95, 0.999]
+eps: 1.0e-8

@@ -1,0 +1,22 @@
+defaults:
+  - _self_                           
+  - sampler: default  # Sampler
+  # Dataloaders
+  - dataloader@val_dataloader: val
+    # enable color logging
+  - override hydra/hydra_logging: colorlog      # Pretty colors
+  - override hydra/job_logging: colorlog
+
+# model checkpoint
+original_work_dir: ${hydra:runtime.cwd}
+checkpoint_path: "${original_work_dir}/ckpt/"
+checkpoint_name: "dit.pth"
+
+# basic
+res_path: ${original_work_dir}/data
+log_path: ${original_work_dir}/eval
+seed: 2025
+
+# evaluation
+nsamples: 5
+npreds: 25

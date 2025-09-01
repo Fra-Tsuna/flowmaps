@@ -1,0 +1,42 @@
+# @package _global_
+
+# To run this test do python3 slurm.py experiment=env1_augmentation ...
+defaults:
+  - override /model: cdit
+  - override /lr_scheduler: cosine
+  - override /optimizer: adamw
+
+name: 'cluster'
+
+model:
+  input_size: 4
+  output_size: 4
+  hidden_size: 256
+  depth: 8
+  num_heads: 8
+  mlp_ratio: 4.0
+  max_transitions: 20
+  dropout: 0.0
+
+train_dataloader:
+  batch_size: 1024
+  num_workers: 6
+  dataset:
+    max_tokens: 20
+
+val_dataloader:
+  batch_size: 256
+  num_workers: 6
+  shuffle: False
+  dataset:
+    max_tokens: 20
+
+trainer: 
+  iterations: 30000
+  validate_every: 1000
+  patience: null
+  t_sampling_strategy: beta
+  use_ema: true
+
+wandb:
+  mode: online

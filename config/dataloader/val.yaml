@@ -1,0 +1,7 @@
+defaults:
+  - train  
+  - override dataset: val
+
+batch_size: 8
+shuffle: false  # NEVER CHANGE THIS TO TRUE, as it will break the validation logic
+persistent_workers: false

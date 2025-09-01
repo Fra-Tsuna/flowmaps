@@ -1,0 +1,3 @@
+# @package hydra.sweep
+dir: ${oc.env:SCRATCH}/flow-sim/multirun/${now:%Y-%m-%d}_${now:%H-%M-%S}
+subdir: ${hydra.job.num}

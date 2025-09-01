@@ -1,0 +1,4 @@
+_target_: src.dataset.env_dataset.EnvDataset
+datapath: ${res_path}/dataset_train.npz
+max_tokens: 20
+seed: ${seed}

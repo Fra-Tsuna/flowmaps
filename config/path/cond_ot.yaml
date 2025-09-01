@@ -1,0 +1,6 @@
+defaults:
+  - scheduler: cond_ot
+
+_target_: src.models.paths.CondOTProbPath
+scheduler:
+  sigma: 0.0
