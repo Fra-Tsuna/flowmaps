@@ -63,7 +63,7 @@ Key parameters:
 - `stochastic`: enable stochastic object behavior.
 - `size`: environment canvas size.
 - `max_tables`, `min_each`: number of furniture instances and minimum per type.
-- `display_scale`: **visualization only**; upscales the rendered image. Underlying data remain at **256×256**.
+- `display_scale`: **visualization only**; upscales the rendered image. Underlying data remain at **size×size**.
 
 
 ## Training & Logging
