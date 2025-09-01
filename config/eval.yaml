@@ -10,7 +10,7 @@ defaults:
 # model checkpoint
 original_work_dir: ${hydra:runtime.cwd}
 checkpoint_path: "${original_work_dir}/ckpt/"
-checkpoint_name: "dit.pth"
+checkpoint_name: "cdit.pth"
 
 # basic
 res_path: ${original_work_dir}/data

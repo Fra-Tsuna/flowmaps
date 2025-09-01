@@ -7,7 +7,7 @@ seed: 123456
 n_env_train: 2500 # Set to 0 to disable training data generation
 n_env_val: 200 # Set to 0 to disable validation data generation
 
-max_timesteps: 15
+max_timesteps: 20
 
 size: 256
 max_tables: 10

@@ -12,7 +12,7 @@ t_sampling_strategy: beta # uniform, beta or logit_normal
 result_dir: ${hydra:runtime.output_dir}
 validate_every: 1000
 patience: null # Set to null to disable early stopping
-use_ema: false
+use_ema: true
 
 tester:
   nsamples: 5
