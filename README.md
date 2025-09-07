@@ -77,6 +77,8 @@ Our project supports **Weights & Biases** logging.
   python3 main.py wandb.mode=offline experiment=cdit
   ```
 
+To train the MLP baseline, simply override `experiment=mlp`
+
 ## Evaluation & Reproducing Results
 After training, place your checkpoint file in `ckpt/` and run:
 ```bash
