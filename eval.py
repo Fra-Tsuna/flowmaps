@@ -36,8 +36,8 @@ def main(cfg: DictConfig):
     os.makedirs(result_dir, exist_ok=True)
     savefig: Callable = setup_savefig(
         res_path=result_dir,
-        fig_fmt="png",
-        dpi=100,
+        fig_fmt="pdf",
+        dpi=400,
         transparent_png=False,
     )
 
@@ -63,7 +63,7 @@ def main(cfg: DictConfig):
 
     samples = tester.generate_samples(nsamples=cfg.nsamples, npreds=cfg.npreds)
     result = tester.inference(samples)
-    tester.display_results(result, iteration=-1)
+    tester.display_results(result, iteration=-1, scale=4)
 
 
 if __name__ == "__main__":

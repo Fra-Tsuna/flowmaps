@@ -209,9 +209,9 @@ class FMTester():
                 x1 = int(x1 * scale)
                 h = int(h * scale)  
                 w = int(w * scale)
-                color = "cyan"   # normalize RGB to [0,1]
+                color = "magenta"   # normalize RGB to [0,1]
 
-                fig, ax = plt.subplots(1, 3, figsize=(30, 10))
+                fig, ax = plt.subplots(1, 3, figsize=(18, 6), dpi=300)
                 
                 if image.shape[0] == 3:
                     image = image.transpose(1, 2, 0).astype(np.uint8)
@@ -219,11 +219,10 @@ class FMTester():
                     gt_image_q = gt_image_q.transpose(1, 2, 0).astype(np.uint8)
 
                 ax[0].imshow(image)
-                ax[0].set_title(rf"Environment at $\tau_c={tau_current}$", fontsize=10)
-                ax[0].tick_params(axis='both', labelsize=6)
+                ax[0].set_title(rf"Environment at $\tau_c={tau_current}$", fontsize=11)
                 
                 ax[1].imshow(gt_image_q)
-                ax[1].set_title(rf"Ground-truth at $\tau_q={tau_query}$", fontsize=10)
+                ax[1].set_title(rf"Ground truth at $\tau_q={tau_query}$", fontsize=11)
                 rect_gt = patches.Rectangle(
                     (x1, y1),
                     w,
@@ -233,10 +232,9 @@ class FMTester():
                     facecolor="none"
                 )
                 ax[1].add_patch(rect_gt)
-                ax[1].tick_params(axis='both', labelsize=6)
 
                 ax[2].imshow(gt_image_q)
-                ax[2].set_title(rf"Samples at $\tau_q={tau_query}$", fontsize=10)
+                ax[2].set_title(rf"Samples at $\tau_q={tau_query}$", fontsize=11)
                 for samp in samps:
                     ys1, xs1, hs, ws = samp
                     ys1 = int(ys1 * scale)
@@ -252,8 +250,17 @@ class FMTester():
                         facecolor="none"
                     )
                     ax[2].add_patch(rect_samp)
-                ax[2].tick_params(axis='both', labelsize=6)
+                    
+                for k in range(3):
+                    ax[k].tick_params(axis='both', which='both',
+                        bottom=False, top=False, left=False, right=False,
+                        labelbottom=False, labelleft=False)
+                    for side in ("left", "right", "top", "bottom"):
+                        ax[k].spines[side].set_visible(True)
+                        ax[k].spines[side].set_linewidth(1.2)
 
+                fig.subplots_adjust(left=0.03, right=0.99, top=0.93, bottom=0.08)
+                fig.subplots_adjust(wspace=0.22)
                 self.savefig(fig, f"env{i}_object{j}_idx{iteration}")
                 
                 plt.close(fig)
