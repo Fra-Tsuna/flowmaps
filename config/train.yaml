@@ -14,14 +14,9 @@ defaults:
   # e.g. best hyperparameters for each combination of model and datamodule
   - experiment: null
 
-  # enable color logging
-  - override hydra/launcher: local
-  - override hydra/hydra_logging: colorlog      # Pretty colors
-  - override hydra/job_logging: colorlog
-
 # basic
 verbose: false
 original_work_dir: ${hydra:runtime.cwd}
 res_path: ${original_work_dir}/data
 seed: 2025
-name: "cond_ot_linear_euler"
+name: "cdit"

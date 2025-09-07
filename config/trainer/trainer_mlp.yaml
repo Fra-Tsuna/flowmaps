@@ -1,0 +1,23 @@
+_target_: src.trainer.trainer_mlp.TrainingPipelineMLP
+model: ...  # Set during runtime
+iterations: 20000
+dataloaders: ...  # Set during runtime
+optimizer: ...    # Set during runtime
+lr_scheduler: ...    # Set during runtime
+result_dir: ${hydra:runtime.output_dir}
+validate_every: 1000
+use_ema: false
+
+ema:
+  update_after_step: 0
+  use_ema_warmup: false
+  min_decay: 0.0
+  decay: 0.9999
+  inv_gamma: 1.0
+  power: 0.75
+
+# @crowsonkb's notes on EMA Warmup:
+# If gamma=1 and power=1, implements a simple average. gamma=1, power=2/3 are good values for models you plan
+# to train for a million or more steps (reaches decay factor 0.999 at 31.6K steps, 0.9999 at 1M steps),
+# gamma=1, power=3/4 for models you plan to train for less (reaches decay factor 0.999 at 10K steps, 0.9999
+# at 215.4k steps).

@@ -2,16 +2,14 @@
 
 # To run this test do python3 slurm.py experiment=env1_augmentation ...
 defaults:
-  - override /model: cdit
+  - override /model: mlp
   - override /lr_scheduler: cosine
   - override /optimizer: adamw
-  - override /trainer: default
+  - override /trainer: trainer_mlp
 
-name: 'cdit'
+name: 'mlp'
 
 model:
-  input_size: 4
-  output_size: 4
   hidden_size: 256
   depth: 8
   num_heads: 8
@@ -36,7 +34,6 @@ trainer:
   iterations: 30000
   validate_every: 1000
   patience: null
-  t_sampling_strategy: beta
   use_ema: true
 
 wandb:
