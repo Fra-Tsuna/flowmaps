@@ -12,7 +12,7 @@
   <sup>#</sup>Co‑first authors
   <br/><br/>
 
-  <a href="https://github.com/Fra-Tsuna/flowmaps"><img alt="arXiv" src="https://img.shields.io/badge/arXiv-SOON-red"></a>
+  <a href="https://arxiv.org/pdf/2509.16398"><img alt="arXiv" src="https://img.shields.io/badge/arXiv-Here-red"></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/License-MIT-yellow"></a>
   <img alt="python" src="https://img.shields.io/badge/python-3.13+-green">
   <img alt="Ubuntu 22.04" src="https://img.shields.io/badge/Ubuntu-22.04-E95420">
