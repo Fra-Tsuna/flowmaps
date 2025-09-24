@@ -88,12 +88,14 @@ python3 eval.py checkpoint_name=YOUR_CHECKPOINT_FILENAME
 ## Citation
 If you find this work useful, please cite the paper (preprint coming soon):
 ```bibtex
-@misc{argenziano2025flowmaps,
-  title        = {Dynamic Objects Relocalization in Changing Environments with Flow Matching},
-  author       = {Argenziano, Francesco and Saavedra-Ruiz, Miguel and Morin, Sacha and Nardi, Daniele and Paull, Liam},
-  year         = {2025},
-  eprint       = {to appear},
-  archivePrefix= {arXiv}
+@misc{argenziano2025dynamicobjectsrelocalizationchanging,
+      title={Dynamic Objects Relocalization in Changing Environments with Flow Matching}, 
+      author={Francesco Argenziano and Miguel Saavedra-Ruiz and Sacha Morin and Daniele Nardi and Liam Paull},
+      year={2025},
+      eprint={2509.16398},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2509.16398}, 
 }
 ```
 
