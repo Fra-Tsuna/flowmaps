@@ -86,7 +86,7 @@ python3 eval.py checkpoint_name=YOUR_CHECKPOINT_FILENAME
 ```
 
 ## Citation
-If you find this work useful, please cite the paper (preprint coming soon):
+If you find this work useful, please cite the paper:
 ```bibtex
 @misc{argenziano2025dynamicobjectsrelocalizationchanging,
       title={Dynamic Objects Relocalization in Changing Environments with Flow Matching}, 
