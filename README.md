@@ -94,8 +94,6 @@ If you find this work useful, please cite the paper:
   journal={arXiv preprint arXiv:2509.16398},
   year={2025}
 }
-
-
 ```
 
 ## License
