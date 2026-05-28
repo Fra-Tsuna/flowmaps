@@ -1,7 +1,7 @@
 defaults:
   - _self_                           
   - path: cond_ot             # Probability path
-  - model: cdit                # Model
+  - model: dit                # Model
   - optimizer: adamw          # Optimizer
   - lr_scheduler: cosine         # LR scheduler
   # Dataloaders
@@ -14,9 +14,18 @@ defaults:
   # e.g. best hyperparameters for each combination of model and datamodule
   - experiment: null
 
+  # enable color logging
+  - override hydra/launcher: local
+  - override hydra/hydra_logging: colorlog      # Pretty colors
+  - override hydra/job_logging: colorlog
+
 # basic
 verbose: false
 original_work_dir: ${hydra:runtime.cwd}
-res_path: ${original_work_dir}/data
+mode: gaussian
+data_root: ${original_work_dir}/data/${mode}
+ckpt_root: ${original_work_dir}/ckpt/${mode}
+res_path: ${original_work_dir}/data/${mode}
 seed: 2025
-name: "cdit"
+name: "cond_ot_linear_euler"
+overfit: false

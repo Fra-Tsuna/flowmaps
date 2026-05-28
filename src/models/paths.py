@@ -1,6 +1,5 @@
 """
 Code adapted from https://github.com/facebookresearch/flow_matching/blob/main/flow_matching/path/path.py
-TODO: adapt docstrings
 """
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod

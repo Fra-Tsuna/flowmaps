@@ -1,0 +1,67 @@
+verbose: false
+original_work_dir: ${hydra:runtime.cwd}
+res_path: ${original_work_dir}/data
+seed: 2025
+model:
+  _target_: src.models.mlp.MLP
+  hidden_size: 256
+  depth: 8
+  max_transitions: 20
+  dropout: 0.0
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 0.0001
+  betas:
+  - 0.95
+  - 0.999
+  eps: 1.0e-08
+  weight_decay: 1.0e-06
+lr_scheduler:
+  name: cosine
+  num_warmup_steps: 500
+  num_training_steps: ${trainer.iterations}
+train_dataloader:
+  dataset:
+    _target_: src.dataset.env_dataset.EnvDataset
+    datapath: ${res_path}/dataset_train.npz
+    max_tokens: 20
+    seed: ${seed}
+  _target_: torch.utils.data.DataLoader
+  batch_size: 64
+  num_workers: 4
+  shuffle: true
+val_dataloader:
+  dataset:
+    _target_: src.dataset.env_dataset.EnvDataset
+    datapath: ${res_path}/dataset_val.npz
+    max_tokens: 20
+    seed: ${seed}
+  _target_: torch.utils.data.DataLoader
+  batch_size: 8
+  num_workers: 4
+  shuffle: false
+  persistent_workers: false
+trainer:
+  _target_: src.trainer.trainer_mlp.TrainingPipelineMLP
+  model: '...'
+  iterations: 1001
+  dataloaders: '...'
+  optimizer: '...'
+  lr_scheduler: '...'
+  result_dir: ${hydra:runtime.output_dir}
+  validate_every: 250
+  use_ema: false
+  ema:
+    update_after_step: 0
+    use_ema_warmup: false
+    min_decay: 0.0
+    decay: 0.9999
+    inv_gamma: 1.0
+    power: 0.75
+wandb:
+  project: flow-maps
+  entity: liam-paull
+  mode: offline
+  tags:
+  - test
+  - mlp

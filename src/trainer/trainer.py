@@ -1,7 +1,6 @@
-import math
 import torch
 import torch.nn as nn
-from torch import Tensor
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LambdaLR
@@ -9,17 +8,16 @@ from diffusers.training_utils import EMAModel
 
 import os
 from tqdm import tqdm
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from functools import partial
-from collections import defaultdict
 
 from omegaconf import DictConfig
 
 from src.models.paths import ProbPath
 from src.trainer.checkpoint_manager import CheckpointManager
+from src.models.optimal_transport import OTPlanSampler
 from src.utils.viz import setup_savefig
 from src.utils.torch_utils import sample_logit_normal, sample_beta, cycle
-from src.utils.statistics import compute_occurrences, build_gmms_from_stats
 from src.flowmaps.flowmaps import FlowMapsPipeline, FMTester
 
 import logging
@@ -52,13 +50,14 @@ class TrainingPipeline:
         path: ProbPath,
         optimizer: Optimizer,
         lr_scheduler: LambdaLR,
-        seed: int, 
+        seed: int,
         t_sampling_strategy: str,
         result_dir: str,
         validate_every: int = 100,
         patience: int = 10,
         max_tokens: int = 128,
         use_ema: bool = False,
+        use_coupling: bool = False,
         tester: DictConfig = None,
         ema: DictConfig = None,
     ):
@@ -73,7 +72,6 @@ class TrainingPipeline:
 
         self.optim = optimizer
         self.lr_scheduler = lr_scheduler
-        self.iterations = iterations + 1
         # self.guidance_scale = self.sampler.guidance_scale
         self.use_ema = use_ema
 
@@ -83,6 +81,7 @@ class TrainingPipeline:
         self.checkpoint_dir = os.path.join(self.result_dir, "checkpoints")
 
         self.savefig = setup_savefig(res_path=result_dir, fig_fmt="png", dpi=300, transparent_png=False)
+        self.ot_sampler = OTPlanSampler(method="exact")
         self.manager = CheckpointManager(checkpoints_path=self.checkpoint_dir, patience=patience)
         # Printing configuration
         self.validate_every = validate_every
@@ -95,7 +94,7 @@ class TrainingPipeline:
             self.t_sampler = partial(sample_beta, s=0.999)
         else:
             raise ValueError(f"Unknown sampling strategy: {t_sampling_strategy}")
-        
+
         self.max_tokens = max_tokens
         self.cfg_tester = tester
         self.seed = seed
@@ -103,57 +102,63 @@ class TrainingPipeline:
         # If EMA model is provided, wrap the model with EMA
         self.ema: Optional[EMAModel] = None
         if self.use_ema:
-            self.ema = EMAModel(
-                parameters=self.vf.parameters(),
-                **ema)
+            self.ema = EMAModel(parameters=self.vf.trainable_parameters(), **ema)
 
+        self.use_coupling = use_coupling
         self.logged_imgs = set()  # To keep track of logged images
-        self.gaussians_gt = None  # For KL computation
 
     def train(self, run):
-        
-        self.vf.train()
 
-        # Run the code for num_iterations of iterations instead of epochs, gives a bit more control
+        self.vf.train()  # DiT.train() override keeps vae in eval
+        mean = torch.tensor(self.train_dataloader.dataset.latent_statistics["mean"], device=self.device)
+        std = torch.tensor(self.train_dataloader.dataset.latent_statistics["std"], device=self.device)
+
+        # Run the code for num_itereations of iterations instead of epochs, gives a bit more control
         iterator = cycle(self.train_dataloader)
 
         pbar = tqdm(range(self.iterations), desc="Training", total=self.iterations, dynamic_ncols=True, leave=True)
-        metrics = {"train_loss": torch.nan, "val_loss": torch.nan, "nll": torch.nan}
+        metrics = {"train_loss": torch.nan, "val_loss": torch.nan, "val_nll": torch.nan}
 
         for i in pbar:
-            data = {k: v.to(self.device) for k, v in next(iterator).items()}
-            
-            t_query    = data["t_query"]      # (B,)
-            t_current  = data["t_current"]    # (B,)
-            mask       = data["mask"]         # (B, S)
-            map        = data["map"]          # (B, S, 5)
-            obj_q      = data["query_object"] # (B, 1, 5)
-            types      = data["types"]        # (B, S)
-        
-            B  = t_query.shape[0]  # Batch size
-            
-            #Fetching the Q for the cross attention
-            tgt_obj_bb = obj_q[:,:,:4]  # (B, 1, 4)
-            tgt_obj_col = obj_q[:,:,4] # (B, 1,)
-            
-            x_1 = tgt_obj_bb # (B, 1, 4)
-            x_1_q = tgt_obj_col # (B, 1,)
+            # Only move tensors to device; keep non-tensor metadata on CPU.
+            data = {k: (v.to(self.device) if torch.is_tensor(v) else v) for k, v in next(iterator).items()}
 
-            x_0 = torch.randn_like(x_1)  # (B, 1, 4)
-            t = self.t_sampler(B).to(self.device)         
+            t_query = data["t_query"]  # (B,)
+            t_current = data["t_current"]  # (B,)
+            mask = data["mask"]  # (B, S)
+            map = data["map"]  # (B, S, 8)
+            obj_q = data["query_object"]  # (B, 1, 8)
+            types = data["types"]  # (B, S)
+
+            # Get query object class label
+            obj_cls = obj_q[:, :, -1]  # (B, 1), label is at -1
+            B, _, D = obj_q.shape
+
+            # Encode and normalize query
+            # README: use mean?
+            _mu, _logvar, query_latents = self.vf.encode_query(obj_q.view(B, D))
+            query_latents = (query_latents.view(B, 1, -1) - mean) / std
+
+            x_0 = torch.randn_like(query_latents)  # (B, 1, latent_dim)
+            x_1 = query_latents
+            if self.use_coupling:
+                x_0, x_1, map, obj_cls, t_current, t_query, types, mask = self.prepare_batch_coupling(
+                    x_0, x_1, map, obj_cls, t_current, t_query, types, mask
+                )
+            t = self.t_sampler(B).to(self.device)
             path_sample = self.path.sample(t=t, x_0=x_0, x_1=x_1)
-            
-            x_t = path_sample.x_t  # (B, 1, 4)
-            
-            prediction = self.vf(x = x_t, 
-                        t = t,
-                        obj = x_1_q,
-                        map = map, 
-                        tau0 = t_current,
-                        tau = t_query,
-                        types = types,
-                        key_padding_mask = mask) # (B, 1, out_dim)
-            
+
+            prediction = self.vf(
+                x=path_sample.x_t,
+                t=t,
+                obj=obj_cls,
+                map=map,
+                tau0=t_current,
+                tau=t_query,
+                types=types,
+                key_padding_mask=mask,
+            )  # (B, 1, latent_dim)
+
             # flow matching l2 loss
             loss = torch.pow(prediction - path_sample.dx_t, 2).mean()
             metrics["train_loss"] = loss.item()
@@ -165,33 +170,20 @@ class TrainingPipeline:
             self.optim.zero_grad()
             self.lr_scheduler.step()
             if self.use_ema:
-                self.ema.step(self.vf.parameters())
+                self.ema.step(self.vf.trainable_parameters())
 
             pbar.set_postfix(train_loss=f"{metrics['train_loss']:.3f}", val_loss=f"{metrics['val_loss']:.3f}")
-            run.log({"train_loss": metrics["train_loss"], "lr": lr, "step": i}, step=i)
+            run.log({"train/loss": metrics["train_loss"], "lr": lr}, step=i)
 
             if (i + 1) % self.validate_every == 0:
-                statistics = self.validate(i)
-                metrics["val_loss"] = statistics["val_loss"]
-                metrics["nll/flowmaps"] = statistics["nll/flowmaps"]
-                metrics["nll/zero"] = statistics["nll/zero"]
-                metrics["nll/diag"] = statistics["nll/diag"]
-                metrics["nll/full"] = statistics["nll/full"]
-                metrics["kl"] = statistics["kl"]
-                
-                run.log({"val_loss": metrics["val_loss"],
-                        "nll/flowmaps": metrics["nll/flowmaps"],
-                        "nll/zero": metrics["nll/zero"],
-                        "nll/diag": metrics["nll/diag"],
-                        "nll/full": metrics["nll/full"],
-                        "kl": metrics["kl"],
-                        "step": i,
-                        }, step=i)
-
+                val_metrics = self.validate(i)
+                metrics["val_loss"] = val_metrics["val_loss"]
+                metrics["nll"] = val_metrics["nll"]
+                run.log({"val/loss": metrics["val_loss"], "val/nll": metrics["nll"]}, step=i)
                 if self.use_ema:
                     # Temporarily store and copy EMA weights to vf
-                    self.ema.store(self.vf.parameters())
-                    self.ema.copy_to(self.vf.parameters())
+                    self.ema.store(self.vf.trainable_parameters())
+                    self.ema.copy_to(self.vf.trainable_parameters())
                 self.manager.save_if_best(
                     model=self.vf,
                     optimizer=self.optim,
@@ -204,217 +196,162 @@ class TrainingPipeline:
                 )
                 if self.use_ema:
                     # Restore original weights to avoid affecting training
-                    self.ema.restore(self.vf.parameters())
-                self.vf.train()
+                    self.ema.restore(self.vf.trainable_parameters())
+                self.vf.train()  # DiT.train() override keeps vae in eval
+                # Early stopping: TODO: fix this, it;s not working
+                # if self.manager.early_stop:
+                #     return
 
         if self.use_ema:
             # Temporarily store and copy EMA weights to vf
-            self.ema.store(self.vf.parameters())
-            self.ema.copy_to(self.vf.parameters())
+            self.ema.store(self.vf.trainable_parameters())
+            self.ema.copy_to(self.vf.trainable_parameters())
         self.manager.save(
             model=self.vf,
             optimizer=self.optim,
             ema=self.ema,
             lr_scheduler=self.lr_scheduler,
-            iteration=self.iterations,
+            iteration=self.iterations - 1,
             f_name="last.pth",
             model_args=self.vf.model_args,
             run=run,
         )
         if self.use_ema:
             # Restore original weights to avoid affecting training
-            self.ema.restore(self.vf.parameters())
+            self.ema.restore(self.vf.trainable_parameters())
 
-    def validate(self, iteration: int) -> Dict[str, float]:
-        
+    def prepare_batch_coupling(self, x_0, x_1, map, obj_cls, t_current, t_query, types, mask):
+        """Apply minibatch OT coupling: only x_0 is permuted to minimise ||x_0 - x_1||².
+        x_1 and all conditioning stay in their original order so semantic alignment is preserved.
+
+        See: Tong et al. 2023 (https://arxiv.org/abs/2302.00482)
+             Pooladian et al. 2023 (https://arxiv.org/abs/2304.14772)
+        """
+        B, _, latent_dim = x_0.shape
+        x_0_coupled, _, i, _ = self.ot_sampler.sample_plan_with_indices(
+            x_0.view(B, -1), x_1.view(B, -1)
+        )
+        return (
+            x_0_coupled.view(B, 1, latent_dim),
+            x_1,
+            map,
+            obj_cls,
+            t_current,
+            t_query,
+            types,
+            mask,
+        )
+
+    def validate(self, iteration: int) -> float:
+
         # Start validation
         if self.use_ema:
-            self.ema.store(self.vf.parameters())    # Save current weights
-            self.ema.copy_to(self.vf.parameters())  # Overwrite with EMA weights
-            
+            self.ema.store(self.vf.trainable_parameters())  # Save current weights
+            self.ema.copy_to(self.vf.trainable_parameters())  # Overwrite with EMA weights
         # Set model to eval mode
         self.vf.eval()
-        
+        mean = torch.tensor(self.val_dataloader.dataset.latent_statistics["mean"], device=self.device)
+        std = torch.tensor(self.val_dataloader.dataset.latent_statistics["std"], device=self.device)
+
         val_loss: List[float] = []
-        kl:       List[float] = []
-        nll:      List[float] = []
-        nll_zero: List[float] = []
-        nll_diag: List[float] = []
-        nll_full: List[float] = []
+        # val_nll: List[float] = []
 
         pbar = tqdm(self.val_dataloader, desc="Validation", total=len(self.val_dataloader), dynamic_ncols=True)
         for data in pbar:
-            data = {k: v.to(self.device) for k, v in data.items()}
+            # Only move tensors to device; keep non-tensor metadata on CPU.
+            data = {k: (v.to(self.device) if torch.is_tensor(v) else v) for k, v in data.items()}
 
-            t_query    = data["t_query"]      # (B,)
-            t_current  = data["t_current"]    # (B,) 
-            mask       = data["mask"]         # (B, S)
-            map        = data["map"]          # (B, S, 5)
-            obj_q      = data["query_object"] # (B, 1, 5)
-            types      = data["types"]        # (B, S)
-            
-            env_id     = data["env_id"]       # (B,)
-            obj_id     = data["q_obj_id"]     # (B,)
-            
-            B  = t_query.shape[0]  # Batch size
-            
-            #Fetching the Q for the cross attention
-            tgt_obj_bb = obj_q[:,:,:4]  # (B, 1, 4)
-            tgt_obj_col = obj_q[:,:,4] # (B, 1,)
-            
-            x_1 = tgt_obj_bb # (B, 1, 4)
-            x_1_q = tgt_obj_col # (B, 1,)
+            t_query = data["t_query"]  # (B,)
+            t_current = data["t_current"]  # (B,)
+            mask = data["mask"]  # (B, S)
+            map = data["map"]  # (B, S, 8)
+            obj_q = data["query_object"]  # (B, 1, 8)
+            types = data["types"]  # (B, S)
 
-            x_0 = torch.randn_like(x_1)  # (B, 1, 4)
-            t = self.t_sampler(B).to(self.device)  
+            # Get query object class label
+            obj_cls = obj_q[:, :, -1]  # (B, 1), label is at -1
 
-            # Disable gradient computation for loss calculation
+            B, _, D = obj_q.shape
+
             with torch.inference_mode():
+                # Encode and normalize query
+                _mu, _logvar, query_latents = self.vf.encode_query(obj_q.view(B, D))
+                query_latents = (query_latents.view(B, 1, -1) - mean) / std
+
+                x_0 = torch.randn_like(query_latents)  # (B, 1, latent_dim)
+                x_1 = query_latents
+                t = self.t_sampler(B).to(self.device)
                 path_sample = self.path.sample(t=t, x_0=x_0, x_1=x_1)
-                x_t = path_sample.x_t  # (B, 1, 4)
-                prediction = self.vf(x = x_t, 
-                            t = t,
-                            obj = x_1_q,
-                            map = map, 
-                            tau0 = t_current,
-                            tau = t_query,
-                            types = types,
-                            key_padding_mask = mask) # (B, 1, out_dim)
-                
+
+                prediction = self.vf(
+                    x=path_sample.x_t,
+                    t=t,
+                    obj=obj_cls,
+                    map=map,
+                    tau0=t_current,
+                    tau=t_query,
+                    types=types,
+                    key_padding_mask=mask,
+                )  # (B, 1, out_dim)
+
                 # Validation loss
                 loss = torch.pow(prediction - path_sample.dx_t, 2).mean()
             val_loss.append(loss.item())
-                
-            # Negative log likelihood computation
-            model_extras = {
-                "obj": x_1_q,
-                "map": map,
-                "tau0": t_current,
-                "tau": t_query,
-                "types": types,
-                "key_padding_mask": mask
-            }
-            # We need gradient enabled to compute log likelihood
-            log_p = self.compute_log_p(x_1=x_1, model_extras=model_extras)
-            nll.append((-log_p).detach())
-            
-            # Compute KL divergence
-            keys = [(int(env_id[i]), int(t_query[i]), int(obj_id[i])) for i in range(env_id.shape[0])]
-            log_q = self.compute_log_q(x_1=x_1, keys=keys)
-            kl.append((log_q - log_p).detach())
 
-            with torch.no_grad():
-                # Computing other NLL baselines
-                X = x_1.flatten(start_dim=1)  # (B, D)
-                B, D = X.shape
-                
-                # Zero-field / identity baseline
-                nll_zero_ = 0.5 * (X.pow(2).sum(dim=1) + D * math.log(2*math.pi))
-                nll_zero.append(nll_zero_)
-                
-                # Diagonal Gaussian baseline
-                mu  = X.mean(dim=0, keepdim=True)
-                var = X.var(dim=0, unbiased=False, keepdim=True) + 1e-8
-                diag  = ((X - mu)**2 / var).sum(dim=1)
-                const_diag = D * math.log(2*math.pi) + torch.log(var).sum(dim=1)
-                nll_diag_batch = 0.5 * (diag + const_diag)
-                nll_diag.append(nll_diag_batch)
-                
-                # Full Gaussian baseline
-                Xc = X - mu
-                Sigma = (Xc.T @ Xc) / B + 1e-6 * torch.eye(D, device=X.device, dtype=X.dtype)
-                L = torch.linalg.cholesky(Sigma)
-                Z = torch.linalg.solve_triangular(L, Xc.T, upper=False)
-                m2 = (Z**2).sum(dim=0)
-                logdet = 2.0 * torch.log(torch.diag(L)).sum()
-                nll_full_batch = 0.5 * (m2 + D * math.log(2*math.pi) + logdet)
-                nll_full.append(nll_full_batch)
-            
+            # # Negative log likelihood computation
+            # model_extras = {
+            #     "obj": obj_cls,
+            #     "map": map,
+            #     "tau0": t_current,
+            #     "tau": t_query,
+            #     "types": types,
+            #     "key_padding_mask": mask,
+            # }
+            # # We need gradient enabled to compute log likelihood
+            # log_p = self.compute_log_p(x_1=x_1.detach().clone().requires_grad_(True), model_extras=model_extras)
+            # val_nll.append(log_p.detach())
+
+            pbar.set_postfix(val_loss=f"{loss.item():.3f}")
+
         val_loss = torch.mean(torch.tensor(val_loss))
-        kl       = torch.mean(torch.cat(kl))
-        nll      = torch.sum(torch.cat(nll))
-        nll_zero = torch.sum(torch.cat(nll_zero))
-        nll_diag = torch.sum(torch.cat(nll_diag))
-        nll_full = torch.sum(torch.cat(nll_full))
+        # val_nll = -torch.sum(torch.cat(val_nll))
 
         self.log_images(iteration)
-        
+
         # Resume training
         if self.use_ema:
-            self.ema.restore(self.vf.parameters())  # Restore original weights
-        self.vf.train()
-        
-        statistics = {
-            "val_loss": val_loss.item(),
-            "nll/flowmaps":  nll.item(),
-            "nll/zero": nll_zero.item(),
-            "nll/diag": nll_diag.item(),
-            "nll/full": nll_full.item(),
-            "kl": kl.item()
-        }
-        
-        return statistics
-    
-    
+            self.ema.restore(self.vf.trainable_parameters())  # Restore original weights
+        self.vf.train()  # DiT.train() override keeps vae in eval
+        return {"val_loss": val_loss.item(), "nll": float("nan")}
+
     def log_images(self, iteration: int):
-        
+
         tester = FMTester(
             model=self.vf,
             pipeline=self.sampler,
             dataset=self.val_dataloader.dataset,
             savefig=self.savefig,
-            seed=self.seed
+            seed=self.seed,
         )
 
         samples = tester.generate_samples(nsamples=self.cfg_tester.nsamples, npreds=self.cfg_tester.npreds)
         result = tester.inference(samples)
-        tester.display_results(result, iteration, self.cfg_tester.scale)
+        tester.display_results(result, iteration)
         images_path = os.path.join(self.result_dir, "png")
         pngs = [f for f in os.listdir(images_path) if os.path.isfile(os.path.join(images_path, f))]
         logger.info(f"Logging images to wandb")
         for png in pngs:
             if png in self.logged_imgs:
                 continue
-            env, obj, _ = png.split("_")
-            wandb.log({f"{env}_{obj}": wandb.Image(os.path.join(images_path, png))}, step=iteration)
-            self.logged_imgs.add(png)     
+            # Filename format: {env_name}_object{j}_idx{iteration}.png
+            # env_name may contain underscores, so split from the right on "_object"
+            stem = png.rsplit(".png", 1)[0]  # remove extension
+            key = stem.rsplit("_idx", 1)[0]  # remove _idx{iteration} suffix
+            wandb.log({key: wandb.Image(os.path.join(images_path, png))}, step=iteration)
+            self.logged_imgs.add(png)
 
+    def compute_log_p(self, x_1: torch.Tensor, model_extras: Dict[str, torch.Tensor]) -> torch.Tensor:
 
-    def compute_log_p(self, x_1: Tensor, model_extras: Dict[str, Tensor]) -> Tensor:
+        _, log_likelihood = self.sampler.compute_likelihood(model=self.vf, x_1=x_1, model_extras=model_extras)
 
-        _, log_likelihood = self.sampler.compute_likelihood(
-            model=self.vf,
-            x_1=x_1,
-            model_extras=model_extras
-        )
-        
         return log_likelihood
-    
-    @torch.no_grad()
-    def compute_log_q(self, x_1: Tensor, keys: List[Tuple[int, int, int]]) -> Tensor:
-        """
-        x_1: (B,1,4) in [y,x,h,w] -> transform to u=(cy,cx,h,w) and evaluate the GMM at the same points.
-        """
-        if self.gaussians_gt is None:
-            self.gaussians_gt = self._prepare_gaussians()
-        gmms = self.gaussians_gt
-
-        y, x, h, w = x_1[:, 0, :].unbind(-1)                    # (B,)
-        x = torch.stack([y + 0.5*h, x + 0.5*w, h, w], dim=-1)   # (B, 4)
-        
-        logs = []
-        for i, key in enumerate(keys):
-            g = gmms[key]
-            logs.append(g["dist"].log_prob(x[i]))
-            
-        return torch.stack(logs, dim=0)  # (B,)
-    
-    
-    def _prepare_gaussians(self):
-        statistics = compute_occurrences(self.val_dataloader.dataset)
-        gmms = build_gmms_from_stats(statistics, 
-                                     beta_pos=0.35, 
-                                     beta_size=0.02,
-                                     return_dists_params=True, 
-                                     device=self.device)
-        return gmms

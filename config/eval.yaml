@@ -1,22 +1,28 @@
+# @package _global_
+
 defaults:
-  - _self_                           
-  - sampler: default  # Sampler
-  # Dataloaders
-  - dataloader@val_dataloader: val
-    # enable color logging
-  - override hydra/hydra_logging: colorlog      # Pretty colors
+  - train
+  - override experiment: dit
+  - override /dataloader/dataset@val_dataloader.dataset: sim_minival
+  - _self_
+  - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
-# model checkpoint
-original_work_dir: ${hydra:runtime.cwd}
-checkpoint_path: "${original_work_dir}/ckpt/"
-checkpoint_name: "cdit.pth"
+checkpoint_path: "${ckpt_root}/dit.pth"
 
-# basic
-res_path: ${original_work_dir}/data
-log_path: ${original_work_dir}/eval
-seed: 2025
+# Output directory for PNGs
+log_path: "${original_work_dir}/eval"
 
-# evaluation
+# Display mode: "bev" (default) or "topdown" (requires minival + topdown renders)
+display_mode: bev
+
+topdown_root: "${data_root}/topdown/minival"
+
+# PNG dump settings
 nsamples: 5
 npreds: 25
+only_moved: true        # if true, only visualise samples where the query object moved
+min_displacement: 1.0   # minimum XZ displacement (metres) to count as moved
+
+# overfit must be false for eval
+overfit: false

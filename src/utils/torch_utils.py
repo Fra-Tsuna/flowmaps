@@ -90,4 +90,21 @@ def sample_beta(size: int, s = 0.999) -> Tensor:
     """
     u = torch.distributions.Beta(torch.tensor([1.5]), torch.tensor([1.0])).sample(torch.tensor([size]))
     tau = s * (1.0 - u)
-    return tau.squeeze() 
+    return tau.squeeze()
+
+def read_maps(maps_path: str) -> list:
+    """
+    Reads and processes the maps file.
+
+    Args:
+        maps_path (str): Path to the maps file.
+
+    Returns:
+        list: Processed data from the file.
+    """
+    with open(maps_path, "r") as f:
+        data = f.readlines()
+        data = [line.strip().split(" ") for line in data]
+    return data
+
+

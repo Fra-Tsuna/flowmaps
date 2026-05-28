@@ -1,5 +1,5 @@
 defaults:
-  - dataset: train
+  - dataset: vae_train
 
 _target_: torch.utils.data.DataLoader
 batch_size: 64

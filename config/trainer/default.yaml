@@ -9,15 +9,15 @@ path: null  # Set during runtime
 optimizer: ...    # Set during runtime
 lr_scheduler: ...    # Set during runtime
 t_sampling_strategy: beta # uniform, beta or logit_normal
+use_coupling: false # minibatch OT coupling (Tong et al. 2023, Pooladian et al. 2023)
 result_dir: ${hydra:runtime.output_dir}
 validate_every: 1000
 patience: null # Set to null to disable early stopping
-use_ema: true
+use_ema: false
 
 tester:
   nsamples: 5
   npreds: 25
-  scale: 1
 
 ema:
   update_after_step: 0

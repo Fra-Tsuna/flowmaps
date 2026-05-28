@@ -1,0 +1,51 @@
+# @package _global_
+
+# To run this test do python3 slurm.py experiment=env1_augmentation ...
+defaults:
+  - override /trainer: vae
+  - override /model: vae
+  - override /lr_scheduler: cosine
+  - override /optimizer: adamw
+
+name: 'train_vae'
+
+model:
+  latent_dim: 32
+  hidden_size: 256
+  depth: 3
+  mlp_ratio: 4.0
+  dropout: 0.1
+  n_classes: 3
+  encode_yaw: false
+
+train_dataloader:
+  batch_size: 256
+  num_workers: 0
+  dataset:
+    max_tokens: 32
+    latent_statistics_path: null
+
+val_dataloader:
+  batch_size: 128
+  num_workers: 0
+  shuffle: False
+  dataset:
+    max_tokens: 32
+    latent_statistics_path: null
+
+trainer:
+  iterations: 30000
+  validate_every: 2500
+  patience: null
+  use_ema: false
+  hyperparams:
+    beta: 0.01
+    kl_warmup_steps: 10000
+    loss_weights:
+      ciou: 1.0
+      l1_center: 5.0
+      l1_size: 5.0
+      ce: 1.0
+
+wandb:
+  mode: online

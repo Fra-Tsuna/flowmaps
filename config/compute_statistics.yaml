@@ -1,0 +1,29 @@
+defaults:
+  - model: vae
+  - dataloader@train_dataloader: train
+  - override /dataloader/dataset@train_dataloader.dataset: vae_train
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+  - _self_
+
+original_work_dir: ${hydra:runtime.cwd}
+mode: gaussian
+data_root: ${original_work_dir}/data/${mode}
+ckpt_root: ${original_work_dir}/ckpt/${mode}
+latents_root: ${data_root}/latents
+stats_path: ${latents_root}/latent_statistics.npz
+checkpoint_path: ${ckpt_root}
+checkpoint_name: vae.pth
+seed: 2025
+overfit: false
+
+model:
+  use_log_size: true
+
+train_dataloader:
+  batch_size: 512
+  num_workers: 0
+  shuffle: false
+  dataset:
+    max_tokens: 32
+    latent_statistics_path: null

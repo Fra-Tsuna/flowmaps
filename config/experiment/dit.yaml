@@ -1,0 +1,53 @@
+# @package _global_
+
+# To run this test do python3 slurm.py experiment=env1_augmentation ...
+defaults:
+  - override /model: dit
+  - override /lr_scheduler: cosine
+  - override /optimizer: adamw
+  - override /dataloader/dataset@train_dataloader.dataset: sim_train
+  - override /dataloader/dataset@val_dataloader.dataset: sim_val
+
+name: 'cluster'
+latents_root: ${data_root}/latents
+
+model:
+  vae_path: ${latents_root}/vae.pth
+  hidden_size: 256
+  depth: 8
+  num_heads: 8
+  mlp_ratio: 4.0
+  max_transitions: null # set during instantiation
+  furn_classes: null # set during instantiation
+  obj_classes: null # set during instantiation
+  dropout: 0.1
+  encode_yaw: False
+
+train_dataloader:
+  batch_size: 1024
+  num_workers: 0
+  dataset:
+    max_tokens: 32
+    latent_statistics_path: ${latents_root}/latent_statistics.npz
+
+val_dataloader:
+  batch_size: 256
+  num_workers: 0
+  shuffle: False
+  dataset:
+    max_tokens: 32
+    latent_statistics_path: ${latents_root}/latent_statistics.npz
+
+trainer:
+  iterations: 30000
+  validate_every: 2500
+  patience: null
+  t_sampling_strategy: logit_normal
+  use_ema: true
+  use_coupling: true
+  sampler:
+    solver_args:
+      method: euler
+
+wandb:
+  mode: online

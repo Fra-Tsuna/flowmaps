@@ -1,7 +1,7 @@
 defaults:
   - train  
-  - override dataset: val
+  - override dataset: vae_val
 
 batch_size: 8
-shuffle: false  # NEVER CHANGE THIS TO TRUE, as it will break the validation logic
+shuffle: false
 persistent_workers: false

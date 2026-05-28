@@ -1,0 +1,6 @@
+- wandb.mode=offline
+- wandb.tags=[test,mlp]
+- train_dataloader.batch_size=64
+- val_dataloader.batch_size=8
+- trainer.iterations=1001
+- trainer.validate_every=250

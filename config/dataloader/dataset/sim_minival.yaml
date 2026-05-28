@@ -1,0 +1,13 @@
+_target_: src.dataset.sim_dataset.SimDataset
+datapath: null
+data_root: ${data_root}/minival
+scan_name: scan_merged.parquet
+latent_statistics_path: null
+max_tokens: 32
+seed: ${seed}
+bev_size: 256
+overfit: ${overfit}
+use_log_size: true
+size_log_eps: 1.0e-4
+max_cached_envs: 1000
+preload_workers: 8

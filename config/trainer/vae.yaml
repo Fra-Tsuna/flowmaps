@@ -1,0 +1,40 @@
+defaults:
+  - /sampler: default 
+
+_target_: src.trainer.vae_trainer.VAETrainer
+model: null           # Set during runtime
+iterations: 20000
+dataloaders: null     # Set during runtime
+optimizer: null       # Set during runtime
+lr_scheduler: null    # Set during runtime
+result_dir: ${hydra:runtime.output_dir}
+validate_every: 1000
+patience: null # Set to null to disable early stopping
+use_ema: false
+
+viz_args:
+  samples: 5
+  max_envs: 15
+  scale: 1
+  img_size: 256
+
+ema:
+  update_after_step: 0
+  use_ema_warmup: false
+  min_decay: 0.0
+  decay: 0.9999
+  inv_gamma: 1.0
+  power: 0.75
+
+hyperparams:
+  beta: 0.01
+  loss_weights:
+    ciou: 1.0
+    l1: 5.0
+    ce: 1.0
+
+# @crowsonkb's notes on EMA Warmup:
+# If gamma=1 and power=1, implements a simple average. gamma=1, power=2/3 are good values for models you plan
+# to train for a million or more steps (reaches decay factor 0.999 at 31.6K steps, 0.9999 at 1M steps),
+# gamma=1, power=3/4 for models you plan to train for less (reaches decay factor 0.999 at 10K steps, 0.9999
+# at 215.4k steps).

@@ -1,5 +1,5 @@
 # Code taken from https://github.com/facebookresearch/flow_matching/blob/main/flow_matching/solver/ode_solver.py
-#        and from https://github.com/facebookresearch/flow_matching/blob/main/flow_matching/utils/utils.py
+# and from https://github.com/facebookresearch/flow_matching/blob/main/flow_matching/utils/utils.py
 
 from typing import Callable, Optional, Sequence, Tuple, Union
 
@@ -181,7 +181,7 @@ class ODESolver:
                     # Compute exact divergence
                     div = 0
                     for i in range(ut.flatten(1).shape[1]):
-                        div += gradient(ut[:, i], xt, create_graph=True)[:, i]
+                        div += gradient(ut.flatten(start_dim=1)[:, i], xt, create_graph=True).flatten(start_dim=1)[:, i].detach()
                 else:
                     # Compute Hutchinson divergence estimator E[z^T D_x(ut) z]
                     ut_dot_z = torch.einsum(

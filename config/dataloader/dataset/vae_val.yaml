@@ -1,0 +1,11 @@
+_target_: src.dataset.vae_dataset.VaeDataset
+datapath: null
+data_root: ${data_root}/val
+scan_name: scan_merged.parquet
+latent_statistics_path: ${data_root}/latents/latent_statistics.npz
+max_tokens: 20
+seed: ${seed}
+bev_size: 256
+overfit: ${overfit}
+use_log_size: true
+size_log_eps: 1.0e-4
