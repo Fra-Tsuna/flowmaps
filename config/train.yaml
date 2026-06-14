@@ -1,7 +1,7 @@
 defaults:
   - _self_                           
   - path: cond_ot             # Probability path
-  - model: dit                # Model
+  - model: cdit               # Model
   - optimizer: adamw          # Optimizer
   - lr_scheduler: cosine         # LR scheduler
   # Dataloaders
@@ -22,7 +22,7 @@ defaults:
 # basic
 verbose: false
 original_work_dir: ${hydra:runtime.cwd}
-mode: gaussian
+mode: habit1
 data_root: ${original_work_dir}/data/${mode}
 ckpt_root: ${original_work_dir}/ckpt/${mode}
 res_path: ${original_work_dir}/data/${mode}

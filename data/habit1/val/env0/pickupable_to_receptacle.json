@@ -1,0 +1,65 @@
+{
+    "AlarmClock|surface|4|12": [
+        "DiningTable|6|3|0",
+        "SideTable|4|3",
+        "Sofa|7|0|1"
+    ],
+    "BaseballBat|4|2": [
+        "DiningTable|6|3|0",
+        "TVStand|7|0|0___0",
+        "SideTable|4|3"
+    ],
+    "Book|surface|6|37": [
+        "CounterTop|6|1",
+        "Dresser|4|1",
+        "TVStand|7|0|0___0"
+    ],
+    "Bottle|surface|6|36": [
+        "CounterTop|6|1",
+        "SideTable|4|3"
+    ],
+    "Candle|surface|7|42": [
+        "CounterTop|6|1",
+        "DiningTable|6|3|0",
+        "SideTable|4|3"
+    ],
+    "CellPhone|surface|4|11": [
+        "Bed|4|0",
+        "TVStand|4|4|0___0"
+    ],
+    "DishSponge|surface|5|20": [
+        "CounterTop|6|1"
+    ],
+    "Egg|surface|6|29": [
+        "Sink|5|1|0"
+    ],
+    "Pencil|surface|7|39": [
+        "DiningTable|6|3|0",
+        "SideTable|4|3"
+    ],
+    "Potato|surface|6|32": [
+        "CounterTop|6|1",
+        "DiningTable|6|3|0",
+        "Sink|5|1|0",
+        "Sink|5|1|0___0"
+    ],
+    "RemoteControl|surface|4|16": [
+        "DiningTable|6|3|0"
+    ],
+    "SaltShaker|surface|6|24": [
+        "SideTable|4|3"
+    ],
+    "ToiletPaper|surface|5|19": [
+        "CounterTop|6|1"
+    ],
+    "Tomato|surface|6|21": [
+        "CounterTop|6|1",
+        "DiningTable|6|3|0",
+        "Sink|5|1|0",
+        "Sink|5|1|0___0"
+    ],
+    "Vase|surface|4|10": [
+        "CounterTop|6|1",
+        "SideTable|4|3"
+    ]
+}

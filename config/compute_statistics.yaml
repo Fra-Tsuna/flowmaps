@@ -7,7 +7,7 @@ defaults:
   - _self_
 
 original_work_dir: ${hydra:runtime.cwd}
-mode: gaussian
+mode: habit1
 data_root: ${original_work_dir}/data/${mode}
 ckpt_root: ${original_work_dir}/ckpt/${mode}
 latents_root: ${data_root}/latents

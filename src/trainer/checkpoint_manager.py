@@ -150,7 +150,7 @@ class CheckpointManager:
                     return mode
 
         # Fallback for known modes appearing elsewhere in the path.
-        for mode in ("gaussian", "even", "instant"):
+        for mode in ("habit1", "habit2", "habit3"):
             if mode in parts:
                 return mode
 

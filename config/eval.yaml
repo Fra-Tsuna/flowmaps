@@ -2,13 +2,13 @@
 
 defaults:
   - train
-  - override experiment: dit
+  - override experiment: cdit
   - override /dataloader/dataset@val_dataloader.dataset: sim_minival
   - _self_
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
-checkpoint_path: "${ckpt_root}/dit.pth"
+checkpoint_path: "${ckpt_root}/cdit.pth"
 
 # Output directory for PNGs
 log_path: "${original_work_dir}/eval"

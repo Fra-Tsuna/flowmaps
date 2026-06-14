@@ -1,6 +1,6 @@
 # @package _global_
 
-# To run this test do python3 slurm.py experiment=env1_augmentation ...
+# Train the VAE: python3 slurm.py experiment=vae mode=<habit1|habit2|habit3> ...
 defaults:
   - override /trainer: vae
   - override /model: vae

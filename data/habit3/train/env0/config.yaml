@@ -1,0 +1,34 @@
+schedule:
+  min_time_buckets:
+  - 1
+  - 2
+  max_time_buckets:
+  - 3
+  - 2
+  mode_duration_mode: instant
+  transition_model_mode: fixed_canonical
+  dt_handling_strategy: clip
+  randomly_delete_transitions: false
+  scales:
+  - week
+  - day
+objects:
+  _target_: semistaticsim.groundtruth.objects.ObjectCollection.create
+  path: ${oc.env:SCRATCH}/sss/semistaticsim/groundtruth/object_data/${procthor_split}/${procthor_index}
+  key: null
+  limit_num_pickupables: 15
+  limit_num_receptacles_per_pickupable: 5
+  max_pickupable_per_receptacle: 5000
+  do_surface_receptacles_only: true
+  bias_sampling: true
+  oob_receptacle_prob: 0.0
+procthor_split: test
+procthor_index: 0
+seed: 0
+timespan_to_collect: 4 week
+dt: ${eval:'1'}
+jax_scan_size: 100
+jax_scan_unroll: 10
+output_bboxes: true
+workdir: /home/francesco/Desktop/Repos/SemiStaticSim/perpetua_data
+target_dir: ${workdir}/generated_data/semistaticsim/${procthor_split}/${procthor_index}/${seed}/groundtruth
