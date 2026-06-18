@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="FlowMaps: Modeling Long-Term Multimodal Object Dynamics with Flow Matching">
+  <meta name="keywords" content="FlowMaps, Flow Matching, Dynamic Environments, Object Navigation">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlowMaps: Modeling Long-Term Multimodal Object Dynamics with Flow Matching</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+
+<body>
+  <style>
+    .text li {
+      margin: 8px 0;
+      list-style-type: disc;
+      margin-left: 1.2em;
+    }
+    .fig-caption {
+      font-size: 0.95rem;
+      color: #4a4a4a;
+      margin-top: 0.8rem;
+    }
+    .table-wrap {
+      border: 1px solid #e2e2e2;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+    .objnav-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .objnav-table th,
+    .objnav-table td {
+      padding: 8px 14px;
+      text-align: right;
+    }
+    .objnav-table th:first-child,
+    .objnav-table td:first-child {
+      text-align: left;
+    }
+    .objnav-table thead th {
+      background: #2b2b3a;
+      color: #fff;
+      font-weight: 600;
+    }
+    .objnav-table thead th:first-child {
+      background: #2b2b3a;
+    }
+    .objnav-table tbody tr { background: #fff; }
+    .objnav-table tbody tr:nth-child(even of :not(.habit-head):not(.ours)) { background: #f7f7fa; }
+    .objnav-table tbody tr:hover { background: #fdf6e3; }
+    .objnav-table tr.habit-head td {
+      text-align: left;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: #e7e9f2;
+      color: #2b2b5a;
+      border-top: 2px solid #b9bdd0;
+    }
+    .objnav-table tbody td { color: #555; }
+    .objnav-table tbody tr.ours { background: #dcebff; }
+    .objnav-table tbody tr.ours td { color: #1f2b45; }
+    .objnav-table tbody tr.ours td:first-child { font-weight: 700; }
+    .objnav-table tbody tr.ours:hover { background: #cfe3ff; }
+    /* best-in-column values: bold + green so they stand out clearly */
+    .objnav-table td b {
+      font-weight: 700;
+      color: #1a7f37;
+      background: #e7f6ec;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    /* ObjNav GIF slideshow */
+    .objnav-carousel { margin: 0 auto 0.5rem; }
+    .objnav-carousel .item { text-align: center; }
+    .objnav-carousel .item img {
+      width: 100%;
+      margin: 0 auto;
+      border-radius: 6px;
+      display: block;
+    }
+    /* dots: compact centered pill, visible over any image */
+    .objnav-carousel .slider-pagination {
+      left: 50%;
+      right: auto;
+      bottom: 10px;
+      transform: translateX(-50%);
+      width: auto;
+      padding: 5px 11px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 999px;
+    }
+    .objnav-carousel .slider-pagination .slider-page {
+      width: 8px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.55);
+      box-shadow: none;
+    }
+    .objnav-carousel .slider-pagination .slider-page.is-active {
+      background: #fff;
+    }
+    /* arrows: a touch more contrast */
+    .objnav-carousel .slider-navigation-previous,
+    .objnav-carousel .slider-navigation-next {
+      background-color: rgba(255, 255, 255, 0.92);
+      border-color: rgba(255, 255, 255, 0.92);
+    }
+  </style>
+
+  <nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-2 publication-title">FlowMaps: Modeling Long-Term Multimodal Object Dynamics with Flow Matching</h1>
+            <div class="is-size-6 publication-authors">
+              <span class="author-block">
+                <a href="https://fra-tsuna.github.io/website/"><i>Francesco Argenziano</i></a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://mikes96.github.io/"><i>Miguel Saavedra-Ruiz</i></a><sup>2,3</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://sachamorin.github.io/"><i>Sacha Morin</i></a><sup>2,3</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://charliegauthier.ca/"><i>Charlie Gauthier</i></a><sup>2,3</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://www.diag.uniroma1.it/nardi/"><i>Daniele Nardi</i></a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://liampaull.ca/"><i>Liam Paull</i></a><sup>2,3</sup>
+              </span>
+              <br>
+            </div>
+            <div class="is-size-6 publication-authors">
+              <span class="author-block"><sup>1</sup>Sapienza University of Rome</span>
+              <span class="author-block"><sup>2</sup>Université de Montréal</span>
+              <span class="author-block"><sup>3</sup>Mila – Quebec AI Institute</span>
+              <br>
+            </div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <!-- PDF Link. -->
+                <span class="link-block">
+                  <a href="./assets/flowmaps_paper.pdf" class="external-link button is-normal">
+                    <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                    </span>
+                    <span>Paper</span>
+                  </a>
+                </span>
+                <!-- arXiv Link (coming soon). -->
+                <span class="link-block">
+                  <a href="#" class="external-link button is-normal" title="Coming soon">
+                    <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                    </span>
+                    <span>arXiv (soon)</span>
+                  </a>
+                </span>
+                <!-- Code Link. -->
+                <span class="link-block">
+                  <a href="https://github.com/Fra-Tsuna/flowmaps/tree/main" class="external-link button is-normal">
+                    <span class="icon">
+                      <i class="fab fa-github"></i>
+                    </span>
+                    <span>Code</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Teaser -->
+  <section class="section" style="padding-top: 0;">
+    <div class="container is-max-desktop has-text-centered">
+      <img src="assets/pipeline.png" alt="FlowMaps pipeline" style="width: 100%;">
+      <p class="fig-caption has-text-justified">
+        <b>Overview of FlowMaps.</b> A latent flow matching model that, given the current scene
+        <i>M<sub>&tau;</sub></i>, a queried object label <i>l<sub>q</sub></i> and a future time
+        <i>&tau;<sub>f</sub></i>, transports a Gaussian latent into a <i>distribution</i> over the object's
+        plausible future bounding boxes. The decoded predictions guide a robot toward where the object is
+        likely to be found.
+      </p>
+    </div>
+  </section>
+
+  <!-- Abstract -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              Joint spatial and temporal understanding of 3D scenes is a crucial requirement for robots deployed
+              in everyday household environments. Such agents must not only comprehend and navigate spatial
+              layouts, but also reason about how these spaces evolve over time. In particular, humans interact with
+              objects daily, causing them to change position throughout the environment and making it difficult for
+              robots to reliably associate current observations with previously seen objects. However, these
+              interactions are not random: human habits and routines induce spatio-temporally consistent patterns
+              in object locations, which robotic agents can potentially learn and then exploit for downstream tasks
+              such as navigation. To this end, we introduce <b>FlowMaps</b>, a latent flow matching model for
+              estimating multimodal distributions over the future locations of dynamic objects in a continuous 3D
+              space. By learning the implicit dependencies among objects and their temporal evolution, FlowMaps
+              predicts likely changes in object locations conditioned on past human interactions, while supporting
+              generalization across previously unseen environments that share similar object routines. To
+              demonstrate the utility of this method, we deploy FlowMaps in a downstream dynamic Object Navigation
+              task in both simulated and real-world environments. Across more than 600 episodes, FlowMaps
+              outperforms state-of-the-art approaches, showing that modeling object dynamics through continuous,
+              multimodal spatio-temporal distributions improves robotic search and navigation in changing household
+              environments.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Method -->
+  <section class="section" style="padding-top: 0;">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Method</h2>
+          <div class="content has-text-justified">
+            <p>
+              FlowMaps approximates the intractable posterior over an object's future location with
+              <b>flow matching</b> in a learned latent space. It is composed of two modules:
+            </p>
+          </div>
+          <div class="text has-text-justified" style="margin-bottom: 1.5rem;">
+            <li>
+              A <b>Variational Autoencoder (VAE)</b> that encodes each object token (a normalized 3D bounding box
+              and a semantic label) into a compact latent code, providing the target space for the flow.
+            </li>
+            <li>
+              A <b>latent Conditional Diffusion Transformer (CDiT)</b> that learns a velocity field transporting a
+              Gaussian latent to the latent of the queried object's future bounding box. A <i>map encoder</i>
+              aggregates the scene into context tokens, and a stack of CDiT blocks iteratively refines the noisy
+              query latent by cross-attending to that context.
+            </li>
+          </div>
+
+          <div class="columns is-vcentered">
+            <div class="column is-half">
+              <img src="assets/map_encoder.png" alt="Map encoder" style="width: 100%;">
+            </div>
+            <div class="column is-half">
+              <img src="assets/cdit_block.png" alt="CDiT block" style="max-height: 360px;">
+            </div>
+          </div>
+          <p class="fig-caption has-text-centered">
+            <b>Left:</b> the permutation-invariant map encoder turns the scene into context tokens
+            <i>H<sub>&tau;</sub></i>. <b>Right:</b> a CDiT block refines the query latent via
+            adaLN-modulated cross-attention to the scene context.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Habits / Data -->
+  <section class="section" style="padding-top: 0;">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Learning from Human Habits</h2>
+          <div class="content has-text-justified">
+            <p>
+              Object movements are not random — they follow recurring human routines that produce
+              <i>semantically consistent patterns</i>. We use <a href="https://procthor.allenai.org/">ProcTHOR</a>
+              to generate dynamic indoor environments driven by three representative habits: <b>location
+              preferences</b> (returning to a few favoured places), a <b>balanced routine</b> (time spread
+              uniformly across locations), and a <b>highly dynamic routine</b> (frequent transitions). A separate
+              FlowMaps model is trained per habit.
+            </p>
+          </div>
+          <img src="assets/habits.png" alt="Three habit patterns across weeks" style="width: 100%;">
+          <p class="fig-caption has-text-centered">
+            The location of a single object (a book) across weeks under each of the three modeled habits.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Downstream: Object Navigation -->
+  <section class="section" style="padding-top: 0;">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Downstream Task: Object Navigation</h2>
+          <div class="content has-text-justified">
+            <p>
+              We deploy FlowMaps on dynamic <b>Object Navigation (ObjNav)</b>, our primary downstream application.
+              Given a queried object, FlowMaps predicts where it is likely to have moved and directs the robot
+              toward the most probable locations, recovering gracefully from failed retrievals by reasoning over
+              the full multimodal distribution.
+            </p>
+          </div>
+          <div class="carousel objnav-carousel">
+            <div class="item"><img src="assets/h1_env315_Pen_rank4.gif" alt="ObjNav rollout — Habit #1, Pen"></div>
+            <div class="item"><img src="assets/h2_env186_Pencil_rank1.gif" alt="ObjNav rollout — Habit #2, Pencil"></div>
+            <div class="item"><img src="assets/h2_env340_CellPhone_rank3.gif" alt="ObjNav rollout — Habit #2, CellPhone"></div>
+            <div class="item"><img src="assets/h2_env600_BaseballBat_rank2.gif" alt="ObjNav rollout — Habit #2, BaseballBat"></div>
+            <div class="item"><img src="assets/h3_env122_Apple_rank1.gif" alt="ObjNav rollout — Habit #3, Apple"></div>
+            <div class="item"><img src="assets/h3_env329_CellPhone_rank1.gif" alt="ObjNav rollout — Habit #3, CellPhone"></div>
+            <div class="item"><img src="assets/h3_env845_Laptop_rank1.gif" alt="ObjNav rollout — Habit #3, Laptop"></div>
+            <div class="item"><img src="assets/h3_env193_Pen_rank2.gif" alt="ObjNav rollout — Habit #3, Pen"></div>
+            <div class="item"><img src="assets/h3_env127_Candle_rank3.gif" alt="ObjNav rollout — Habit #3, Candle"></div>
+            <div class="item"><img src="assets/h3_env519_RemoteControl_rank4.gif" alt="ObjNav rollout — Habit #3, RemoteControl"></div>
+          </div>
+          <p class="fig-caption has-text-centered">
+            Qualitative ObjNav rollouts. <b>Left:</b> bird's-eye view with FlowMaps' ranked predicted modes
+            (#1–#4), the ground-truth object location (GT) and the robot's path. <b>Right:</b> the agent's point of
+            view as it visits the predicted locations in order until the object is found.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="container" style="max-width: 1120px;">
+      <div class="table-wrap" style="overflow-x: auto; margin-top: 1rem;">
+            <table class="objnav-table">
+              <thead>
+                <tr>
+                  <th>Method</th>
+                  <th>SR@1 ↑</th><th>SR@5 ↑</th><th>SR@10 ↑</th><th>mSR ↑</th>
+                  <th>SPL@1 ↑</th><th>SPL@5 ↑</th><th>SPL@10 ↑</th><th>mSPL ↑</th>
+                  <th>Path (m) ↓</th><th>Steps ↓</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="habit-head"><td colspan="11">Habit #1 — location preferences</td></tr>
+                <tr><td>Naive LLM</td><td>42.13</td><td>59.34</td><td>63.77</td><td>57.44</td><td>33.54</td><td>38.40</td><td>39.03</td><td>37.80</td><td>12.01</td><td>195.1</td></tr>
+                <tr><td>TAP-LGX</td><td>35.25</td><td>57.05</td><td>62.62</td><td>54.03</td><td>28.88</td><td>40.03</td><td>44.00</td><td>43.62</td><td>10.62</td><td>193.6</td></tr>
+                <tr><td>OSG+SP</td><td>18.69</td><td>56.89</td><td>64.10</td><td>51.85</td><td>15.34</td><td>31.46</td><td>33.21</td><td>29.29</td><td>12.99</td><td>224.3</td></tr>
+                <tr><td>OSG+LLM</td><td>42.79</td><td>62.46</td><td>63.44</td><td>60.13</td><td>34.65</td><td>44.03</td><td>44.27</td><td>42.90</td><td>8.38</td><td>131.9</td></tr>
+                <tr><td>CEG+SP</td><td>22.30</td><td>58.03</td><td>64.75</td><td>52.66</td><td>18.16</td><td>33.32</td><td>34.82</td><td>30.98</td><td>12.42</td><td>212.7</td></tr>
+                <tr><td>CEG+LLM</td><td>42.95</td><td>62.62</td><td>63.61</td><td>60.29</td><td>34.93</td><td>44.57</td><td>44.81</td><td>43.40</td><td><b>8.00</b></td><td>126.3</td></tr>
+                <tr><td>SGM</td><td>48.36</td><td>69.18</td><td>71.80</td><td>67.26</td><td>38.74</td><td>46.52</td><td>46.84</td><td>45.64</td><td>8.82</td><td>137.4</td></tr>
+                <tr><td>HOMER</td><td>46.72</td><td>67.54</td><td>69.84</td><td>64.46</td><td>37.31</td><td>44.59</td><td>44.98</td><td>43.62</td><td>9.29</td><td>145.9</td></tr>
+                <tr class="ours"><td>FlowMaps (ours)</td><td><b>57.70</b></td><td><b>71.15</b></td><td><b>73.62</b></td><td><b>69.26</b></td><td><b>45.31</b></td><td><b>49.52</b></td><td><b>49.72</b></td><td><b>48.95</b></td><td>9.01</td><td><b>111.1</b></td></tr>
+
+                <tr class="habit-head"><td colspan="11">Habit #2 — balanced routine</td></tr>
+                <tr><td>Naive LLM</td><td>39.02</td><td>58.52</td><td>60.66</td><td>55.46</td><td>31.30</td><td>37.95</td><td>38.21</td><td>36.94</td><td>8.72</td><td>135.2</td></tr>
+                <tr><td>TAP-LGX</td><td>34.26</td><td>54.92</td><td>61.64</td><td>53.57</td><td>28.12</td><td>40.73</td><td>43.18</td><td>39.47</td><td>10.98</td><td>199.6</td></tr>
+                <tr><td>OSG+SP</td><td>19.18</td><td>57.38</td><td>66.07</td><td>52.69</td><td>15.74</td><td>32.03</td><td>34.49</td><td>29.99</td><td>13.37</td><td>233.3</td></tr>
+                <tr><td>OSG+LLM</td><td>36.89</td><td>47.38</td><td>50.16</td><td>46.43</td><td>29.85</td><td>34.97</td><td>35.69</td><td>34.40</td><td>8.18</td><td>129.5</td></tr>
+                <tr><td>CEG+SP</td><td>22.46</td><td>58.36</td><td>65.74</td><td>53.08</td><td>18.31</td><td>33.39</td><td>35.27</td><td>31.17</td><td>12.29</td><td>212.6</td></tr>
+                <tr><td>CEG+LLM</td><td>37.38</td><td>48.20</td><td>50.98</td><td>47.25</td><td>30.11</td><td>35.47</td><td>36.17</td><td>34.90</td><td>8.02</td><td>127.5</td></tr>
+                <tr><td>SGM</td><td>47.54</td><td>66.23</td><td>68.52</td><td>63.85</td><td>38.07</td><td>44.83</td><td>45.14</td><td>43.94</td><td>7.76</td><td>117.6</td></tr>
+                <tr><td>HOMER</td><td>41.48</td><td><b>67.38</b></td><td><b>69.18</b></td><td>62.90</td><td>33.59</td><td>41.65</td><td>41.85</td><td>40.37</td><td>8.79</td><td>135.4</td></tr>
+                <tr class="ours"><td>FlowMaps (ours)</td><td><b>50.49</b></td><td>66.56</td><td>67.21</td><td><b>63.92</b></td><td><b>41.18</b></td><td><b>46.51</b></td><td><b>46.59</b></td><td><b>45.72</b></td><td><b>7.55</b></td><td><b>113.5</b></td></tr>
+
+                <tr class="habit-head"><td colspan="11">Habit #3 — highly dynamic routine</td></tr>
+                <tr><td>Naive LLM</td><td>41.15</td><td>56.23</td><td>61.48</td><td>55.46</td><td>33.52</td><td>38.31</td><td>39.21</td><td>37.89</td><td>9.45</td><td>145.1</td></tr>
+                <tr><td>TAP-LGX</td><td>36.72</td><td>57.05</td><td>64.10</td><td>55.61</td><td>29.82</td><td>42.30</td><td>44.86</td><td>40.97</td><td>9.37</td><td>163.0</td></tr>
+                <tr><td>OSG+SP</td><td>15.90</td><td>56.23</td><td>65.25</td><td>51.21</td><td>12.95</td><td>31.00</td><td>33.31</td><td>28.55</td><td>11.92</td><td>207.0</td></tr>
+                <tr><td>OSG+LLM</td><td>38.52</td><td>54.26</td><td>55.74</td><td>52.33</td><td>31.72</td><td>38.97</td><td>39.33</td><td>38.04</td><td><b>7.68</b></td><td><b>115.7</b></td></tr>
+                <tr><td>CEG+SP</td><td>18.52</td><td>57.21</td><td>64.43</td><td>52.21</td><td>14.85</td><td>31.48</td><td>33.30</td><td>29.37</td><td>11.54</td><td>199.2</td></tr>
+                <tr><td>CEG+LLM</td><td>38.03</td><td>54.10</td><td>55.74</td><td>52.00</td><td>31.23</td><td>38.59</td><td>38.93</td><td>37.62</td><td>7.91</td><td>119.1</td></tr>
+                <tr><td>SGM</td><td>27.21</td><td>62.62</td><td>65.41</td><td>56.84</td><td>22.19</td><td>33.64</td><td>34.02</td><td>31.84</td><td>12.24</td><td>198.1</td></tr>
+                <tr><td>HOMER</td><td>38.03</td><td>62.95</td><td>65.74</td><td>58.93</td><td>30.29</td><td>38.55</td><td>38.94</td><td>37.25</td><td>11.51</td><td>186.9</td></tr>
+                <tr class="ours"><td>FlowMaps (ours)</td><td><b>50.98</b></td><td><b>66.72</b></td><td><b>68.20</b></td><td><b>64.39</b></td><td><b>41.07</b></td><td><b>45.99</b></td><td><b>46.17</b></td><td><b>45.30</b></td><td>7.90</td><td>117.4</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="fig-caption has-text-centered">
+            <b>Dynamic Object Navigation results</b>, grouped by the three habits, over 600+ episodes in disjoint,
+            previously unseen environments. SR / SPL are reported at <i>K</i> = 1, 5, 10 candidate locations,
+            along with mean SR / SPL, path length and step count. <b>Bold</b> marks the best per column;
+            FlowMaps rows are highlighted.
+          </p>
+    </div>
+  </section>
+
+  <!-- BibTeX -->
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <h2 class="title">BibTeX</h2>
+      <pre><code>@article{argenziano2026flowmaps,
+  title   = {FlowMaps: Modeling Long-Term Multimodal Object Dynamics with Flow Matching},
+  author  = {Argenziano, Francesco and Saavedra-Ruiz, Miguel and Morin, Sacha
+             and Gauthier, Charlie and Nardi, Daniele and Paull, Liam},
+  year    = {2026}
+}
+</code></pre>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="content has-text-centered">
+        <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+          <img alt="Creative Commons License" style="border-width:0"
+            src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" />
+        </a>
+      </div>
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+            <p>
+              This website is adapted from the <a rel="license"
+              href="https://github.com/concept-graphs/concept-graphs.github.io">Concept-Graphs</a> template, which
+              is licensed under a <a rel="license"
+              href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0
+              International License</a>. The template uses the <a href="https://github.com/nerfies/nerfies.github.io">Nerfies
+              source code</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>
