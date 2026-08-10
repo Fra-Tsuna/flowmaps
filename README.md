@@ -54,7 +54,7 @@ data/
 │   │   ├── env1/
 │   │   └── ...
 │   ├── val/
-│   ├── minival/       # symlinks into val/ for envs with topdown renders
+│   ├── minival/       
 │   ├── latents/       # VAE checkpoint + latent statistics
 │   │   ├── vae.pth
 │   │   └── latent_statistics.npz
@@ -62,7 +62,7 @@ data/
 │       ├── val/
 │       │   ├── env0/
 │       │   └── ...
-│       └── minival/   # symlinks into topdown/val/
+│       └── minival/  
 ├── habit2/            # Habit #2 (balanced routine)
 │   └── ...
 └── habit3/            # Habit #3 (highly dynamic routine)
