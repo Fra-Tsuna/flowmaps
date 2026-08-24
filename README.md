@@ -69,7 +69,7 @@ data/
     └── ...
 ```
 
-Each env directory contains `scan_merged.parquet`, `config.yaml`, `pickupable_names.json`,
+Each env directory contains `scan_merged.parquet`, `pickupable_names.json`,
 `receptacle_names.json`, and `pickupable_to_receptacle.json`. Checkpoints live under
 `ckpt/{mode}/cdit.pth` and `ckpt/{mode}/vae.pth`.
 
