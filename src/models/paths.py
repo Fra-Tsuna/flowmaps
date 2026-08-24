@@ -13,7 +13,7 @@ from src.utils.torch_utils import expand_tensor_like
 
 @dataclass
 class PathSample:
-    """Represents a sample of a conditional-flow generated probability path.
+    r"""Represents a sample of a conditional-flow generated probability path.
 
     Code taken from: https://github.com/facebookresearch/flow_matching/blob/main/flow_matching/path/path_sample.py
 

@@ -2,7 +2,7 @@
 # References:
 # GLIDE: https://github.com/openai/glide-text2im
 # MAE: https://github.com/facebookresearch/mae/blob/main/models_mae.py
-# DiT: https://github.com/facebookresearch/DiT/blob/main/models.py
+# CDiT (Conditional DiT), based on DiT: https://github.com/facebookresearch/DiT/blob/main/models.py
 # --------------------------------------------------------
 import torch
 import torch.nn as nn
@@ -47,12 +47,12 @@ class TransformerEncoder(nn.Module):
 
 
 ##################################################################
-#                  Core DiT Model                                #
+#                  Core CDiT Model                                #
 ##################################################################
 
-class DiTBlock(nn.Module):
+class CDiTBlock(nn.Module):
     """
-    A DiT block with adaptive layer norm zero (adaLN-Zero) conditioning.
+    A CDiT block with adaptive layer norm zero (adaLN-Zero) conditioning.
     """
     def __init__(self, hidden_size, num_heads, mlp_ratio=4.0, **block_kwargs):
         super().__init__()
@@ -73,7 +73,7 @@ class DiTBlock(nn.Module):
 
     def forward(self, x, x_cond, c, key_padding_mask: Optional[torch.Tensor] = None):
         '''
-        Forward pass of DiTBlock.
+        Forward pass of CDiTBlock.
         Extended to support cross attention.
         - x: query tokens [B, 1, D]
         - x_cond: key and value tokens (e.g. map tokens) [B, S, D]
@@ -97,7 +97,7 @@ class DiTBlock(nn.Module):
 
 class FinalLayer(nn.Module):
     """
-    The final layer of DiT.
+    The final layer of CDiT.
     """
     def __init__(self, hidden_size, out_size):
         super().__init__()
@@ -116,7 +116,7 @@ class FinalLayer(nn.Module):
         return x
     
 
-class DiT(nn.Module):
+class CDiT(nn.Module):
     """
     Diffusion model with a Transformer backbone.
     """
@@ -166,7 +166,7 @@ class DiT(nn.Module):
         self.hidden_size = hidden_size
         
         #############
-        ##   DiT   ##
+        ##   CDiT   ##
         #############
         self.input_embedder = nn.Sequential( # Embedding for the input (noise) 
             nn.Linear(self.latent_dim, hidden_size, bias=True),
@@ -178,9 +178,9 @@ class DiT(nn.Module):
         self.tau0_embedder = nn.Embedding(max_transitions, hidden_size) # Embedding for the number of transitions
         self.query_embedder = LabelEmbedding(hidden_dim=hidden_size, n_classes=obj_classes) # Embedding for the query object
 
-        # DiT
+        # CDiT
         self.blocks = nn.ModuleList([
-            DiTBlock(hidden_size, num_heads, mlp_ratio=mlp_ratio, dropout=dropout) for _ in range(depth)
+            CDiTBlock(hidden_size, num_heads, mlp_ratio=mlp_ratio, dropout=dropout) for _ in range(depth)
         ])
         
         self.final_layer = FinalLayer(hidden_size, out_size=self.latent_dim)
@@ -233,7 +233,7 @@ class DiT(nn.Module):
         # Initialize tau0 embedding table:
         nn.init.normal_(self.tau0_embedder.weight, std=0.02)
 
-        # Zero-out adaLN modulation layers in DiT blocks:
+        # Zero-out adaLN modulation layers in CDiT blocks:
         for block in self.blocks:
             nn.init.constant_(block.adaLN_modulation[-1].weight, 0)
             nn.init.constant_(block.adaLN_modulation[-1].bias, 0)
@@ -322,7 +322,7 @@ class DiT(nn.Module):
 
     def forward(self, x, t, obj, map, tau0, tau, types, key_padding_mask: Optional[torch.Tensor] = None):
         """
-        Forward pass of DiT.
+        Forward pass of CDiT.
         - x:   (B, 1, D) x_t
         - map: (B, S, D) tensor of map tokens
         - obj: (B, 1, D) x_1

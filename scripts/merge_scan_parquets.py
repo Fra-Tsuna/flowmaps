@@ -65,7 +65,7 @@ def main() -> int:
         raise SystemExit(f"Data root does not exist: {data_root}")
 
     # Find all directories that contain at least one scan_N.parquet file,
-    # regardless of nesting depth (handles both gaussian and even layouts).
+    # regardless of nesting depth (handles both flat and nested habit layouts).
     seen_dirs: set[Path] = set()
     for scan_file in sorted(data_root.rglob("scan_[0-9]*.parquet")):
         if SCAN_RE.match(scan_file.name):

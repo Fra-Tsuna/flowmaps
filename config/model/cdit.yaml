@@ -1,0 +1,11 @@
+_target_: src.models.transformer.CDiT
+vae_path: ${ckpt_root}/vae.pth
+hidden_size: 256
+depth: 8
+num_heads: 8
+mlp_ratio: 4.0
+max_transitions: 15
+furn_classes: 3
+obj_classes: 3
+dropout: 0.0
+encode_yaw: False

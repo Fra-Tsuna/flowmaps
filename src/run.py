@@ -24,7 +24,7 @@ from src.utils.mylogging import pretty_print_config
 from src.utils.lookup import load_lookup, set_active_lookup
 from src.trainer.trainer import TrainingPipeline
 from src.trainer.vae_trainer import VAETrainer
-from src.models.transformer import DiT
+from src.models.transformer import CDiT
 from src.models.vae import VAE
 from src.models.paths import CondOTProbPath
 
@@ -64,7 +64,7 @@ def main(cfg: DictConfig):
 
     model_kwargs = train_dataset.model_kwargs()
     logger.info(f"Model kwargs from dataset: {model_kwargs}")
-    model: Union[DiT, VAE] = instantiate(cfg.model, **model_kwargs).to(device)
+    model: Union[CDiT, VAE] = instantiate(cfg.model, **model_kwargs).to(device)
     
     
     # Instantiate probability path

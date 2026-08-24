@@ -109,7 +109,7 @@ class TrainingPipeline:
 
     def train(self, run):
 
-        self.vf.train()  # DiT.train() override keeps vae in eval
+        self.vf.train()  # CDiT.train() override keeps vae in eval
         mean = torch.tensor(self.train_dataloader.dataset.latent_statistics["mean"], device=self.device)
         std = torch.tensor(self.train_dataloader.dataset.latent_statistics["std"], device=self.device)
 
@@ -197,7 +197,7 @@ class TrainingPipeline:
                 if self.use_ema:
                     # Restore original weights to avoid affecting training
                     self.ema.restore(self.vf.trainable_parameters())
-                self.vf.train()  # DiT.train() override keeps vae in eval
+                self.vf.train()  # CDiT.train() override keeps vae in eval
                 # Early stopping: TODO: fix this, it;s not working
                 # if self.manager.early_stop:
                 #     return
@@ -321,7 +321,7 @@ class TrainingPipeline:
         # Resume training
         if self.use_ema:
             self.ema.restore(self.vf.trainable_parameters())  # Restore original weights
-        self.vf.train()  # DiT.train() override keeps vae in eval
+        self.vf.train()  # CDiT.train() override keeps vae in eval
         return {"val_loss": val_loss.item(), "nll": float("nan")}
 
     def log_images(self, iteration: int):
