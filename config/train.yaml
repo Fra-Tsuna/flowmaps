@@ -22,7 +22,7 @@ defaults:
 # basic
 verbose: false
 original_work_dir: ${hydra:runtime.cwd}
-mode: habit1
+mode: schedule1
 data_root: ${original_work_dir}/data/${mode}
 ckpt_root: ${original_work_dir}/ckpt/${mode}
 res_path: ${original_work_dir}/data/${mode}

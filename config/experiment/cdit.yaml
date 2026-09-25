@@ -1,6 +1,6 @@
 # @package _global_
 
-# Train the CDiT: python3 slurm.py experiment=cdit mode=<habit1|habit2|habit3> ...
+# Train the CDiT: python3 slurm.py experiment=cdit mode=<schedule1|schedule2|schedule3> ...
 defaults:
   - override /model: cdit
   - override /lr_scheduler: cosine

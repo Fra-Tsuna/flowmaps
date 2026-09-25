@@ -1,6 +1,6 @@
 # @package _global_
 
-# Train the VAE: python3 slurm.py experiment=vae mode=<habit1|habit2|habit3> ...
+# Train the VAE: python3 slurm.py experiment=vae mode=<schedule1|schedule2|schedule3> ...
 defaults:
   - override /trainer: vae
   - override /model: vae
