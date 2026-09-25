@@ -2,6 +2,10 @@
 
 **FlowMaps: Modeling Long-Term Multimodal Object Dynamics with Flow Matching**
 
+<video src="assets/flowmaps.mp4" controls width="100%"></video>
+
+If the video does not play, [download it here](assets/flowmaps.mp4).
+
 FlowMaps is a latent flow matching (FM) model for estimating multimodal distributions over the
 future locations of dynamic household objects directly in continuous 3D space. Human behavior
 induces recurring temporal regularities in how objects move among semantically plausible
