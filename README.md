@@ -119,10 +119,10 @@ python scripts/merge_scan_parquets.py --data-root ./data/$MODE
 
 ```bash
 # Local
-python slurm.py experiment=vae mode=$MODE wandb.mode=offline
+python main.py experiment=vae mode=$MODE wandb.mode=offline
 
 # Cluster (SLURM)
-python slurm.py --multirun hydra/launcher=remote +hydra/sweep=remote \
+python main.py --multirun hydra/launcher=remote +hydra/sweep=remote \
   experiment=vae mode=$MODE wandb.mode=online wandb.tags=["vae"]
 ```
 
@@ -149,10 +149,10 @@ Writes `data/${MODE}/latents/latent_statistics.npz` and copies the VAE checkpoin
 
 ```bash
 # Local
-python slurm.py experiment=cdit mode=$MODE wandb.mode=offline
+python main.py experiment=cdit mode=$MODE wandb.mode=offline
 
 # Cluster (SLURM)
-python slurm.py --multirun hydra/launcher=remote +hydra/sweep=remote \
+python main.py --multirun hydra/launcher=remote +hydra/sweep=remote \
   experiment=cdit mode=$MODE wandb.mode=online wandb.tags=["cdit"]
 ```
 
@@ -197,5 +197,5 @@ src/
 ├── trainer/     # Training loops (CDiT + VAE), checkpoint manager
 └── utils/       # Lookup tables, losses, logging, visualization, torch helpers
 eval.py          # Evaluation / qualitative sampling entrypoint
-slurm.py         # Training entrypoint (local or SLURM via Hydra)
+main.py          # Training entrypoint (local or SLURM via Hydra)
 ```

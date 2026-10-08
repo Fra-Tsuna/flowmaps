@@ -1,6 +1,6 @@
 """
 To run in the cluster do:
-python3 slurm.py --multirun hydra/launcher=remote +hydra/sweep=remote ...
+python3 main.py --multirun hydra/launcher=remote +hydra/sweep=remote ...
 """
 
 from typing import Union
